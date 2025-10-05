@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  gustavo4bot:
+    build: .
+    container_name: gustavo4_bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - TZ=${TZ:-Europe/Madrid}
+    networks:
+      - bot-network
+
+networks:
+  bot-network:
+    driver: bridge
