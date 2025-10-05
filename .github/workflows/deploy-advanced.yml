@@ -58,7 +58,12 @@ jobs:
               echo "   Response: $body"
             fi
             
-            return $http_code
+            # Return 0 for success (200, 204), or the actual code for errors
+            if [ $http_code -eq 200 ] || [ $http_code -eq 204 ]; then
+              return 0
+            else
+              return 1
+            fi
           }
           
           # Intentar deployment con reintentos
@@ -70,7 +75,7 @@ jobs:
             deploy_attempt $attempt
             exit_code=$?
             
-            if [ $exit_code -eq 200 ] || [ $exit_code -eq 204 ]; then
+            if [ $exit_code -eq 0 ]; then
               echo "✅ Deployment successful on attempt $attempt!"
               success=true
             elif [ $attempt -lt $max_attempts ]; then
