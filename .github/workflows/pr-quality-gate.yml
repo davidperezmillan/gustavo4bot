@@ -91,7 +91,7 @@ jobs:
       
       - name: Run comprehensive tests
         env:
-          TELEGRAM_TOKEN: "123456:TEST_TOKEN_${{ github.event.pull_request.number }}"
+          TELEGRAM_TOKEN: "123456:ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789TOKEN${{ github.event.pull_request.number }}"
           OWNER_ID: "123456789"
           CHAT_SOURCE_ID: "-1001234567890"
           PUBLISH_CHANNEL_ID: "-1001234567891"
