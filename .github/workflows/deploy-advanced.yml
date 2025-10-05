@@ -47,6 +47,7 @@ jobs:
             response=$(curl -s -w "\n%{http_code}" -X POST \
               --connect-timeout 30 \
               --max-time 60 \
+              -H "Content-Type: application/json" \
               "$PORTAINER_WEBHOOK_URL")
             
             http_code=$(echo "$response" | tail -n1)

@@ -19,6 +19,7 @@ jobs:
           echo "🚀 Triggering deployment to Portainer..."
           
           response=$(curl -s -w "%{http_code}" -X POST \
+            -H "Content-Type: application/json" \
             "http://portainer.davidperezmillan.com/api/stacks/webhooks/1e5f595f-f205-4ae0-b2ff-ff007a535e80")
           
           http_code="${response: -3}"
