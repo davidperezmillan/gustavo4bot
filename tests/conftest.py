@@ -4,11 +4,7 @@ Configuración global para pytest
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
-import sys
 import os
-
-# Agregar el directorio bot al path para los imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'bot'))
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -61,12 +57,12 @@ def mock_callback_query():
 
 @pytest.fixture
 def test_config():
-    """Configuración de test"""
+    """Configuración de test desde variables de entorno"""
     return {
-        'TELEGRAM_TOKEN': 'test_token',
-        'OWNER_ID': '123456789',
-        'CHAT_SOURCE_ID': '-1001234567890',
-        'PUBLISH_CHANNEL_ID': '-1001234567891',
-        'STORAGE_CHANNEL_ID': '-1001234567892',
-        'LOG_LEVEL': 'DEBUG'
+        'TELEGRAM_TOKEN': os.environ.get('TELEGRAM_TOKEN', 'test_token'),
+        'OWNER_ID': os.environ.get('OWNER_ID', '123456789'),
+        'CHAT_SOURCE_ID': os.environ.get('CHAT_SOURCE_ID', '-1001234567890'),
+        'PUBLISH_CHANNEL_ID': os.environ.get('PUBLISH_CHANNEL_ID', '-1001234567891'),
+        'STORAGE_CHANNEL_ID': os.environ.get('STORAGE_CHANNEL_ID', '-1001234567892'),
+        'LOG_LEVEL': os.environ.get('LOG_LEVEL', 'DEBUG')
     }

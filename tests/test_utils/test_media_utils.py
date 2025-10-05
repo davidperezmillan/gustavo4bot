@@ -3,11 +3,6 @@ Tests para utilidades de media
 """
 import pytest
 from unittest.mock import MagicMock
-import sys
-import os
-
-# Agregar el path del bot
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'bot'))
 
 class TestMediaUtils:
     """Tests para utilidades de media"""

@@ -3,11 +3,7 @@ Test de integración del bot completo
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-import sys
 import os
-
-# Agregar el path del bot
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'bot'))
 
 class TestBotIntegration:
     """Tests de integración del bot"""
@@ -15,19 +11,18 @@ class TestBotIntegration:
     @pytest.mark.asyncio
     async def test_bot_startup(self):
         """Test de inicio del bot"""
-        with patch.dict(os.environ, {
-            'TELEGRAM_TOKEN': 'test_token',
-            'OWNER_ID': '123456789',
-            'CHAT_SOURCE_ID': '-1001234567890',
-            'PUBLISH_CHANNEL_ID': '-1001234567891',
-            'STORAGE_CHANNEL_ID': '-1001234567892'
-        }):
-            # Simular inicialización exitosa
-            async def mock_bot_init():
-                return True
+        # Los environment vars ya están configurados en CI
+        required_vars = ['TELEGRAM_TOKEN', 'OWNER_ID', 'CHAT_SOURCE_ID', 'PUBLISH_CHANNEL_ID', 'STORAGE_CHANNEL_ID']
+        
+        for var in required_vars:
+            assert var in os.environ
             
-            result = await mock_bot_init()
-            assert result == True
+        # Simular inicialización exitosa
+        async def mock_bot_init():
+            return True
+        
+        result = await mock_bot_init()
+        assert result == True
     
     @pytest.mark.asyncio
     async def test_message_flow(self, mock_telegram_bot):
@@ -74,20 +69,12 @@ class TestBotIntegration:
             'STORAGE_CHANNEL_ID'
         ]
         
-        test_env = {
-            'TELEGRAM_TOKEN': '1234567890:ABCdefGHIjklMNOpqrsTUVwxyz',
-            'OWNER_ID': '123456789',
-            'CHAT_SOURCE_ID': '-1001234567890',
-            'PUBLISH_CHANNEL_ID': '-1001234567891',
-            'STORAGE_CHANNEL_ID': '-1001234567892'
-        }
-        
-        with patch.dict(os.environ, test_env):
-            for var in required_vars:
-                assert var in os.environ
-                value = os.environ[var]
-                assert value is not None
-                assert len(value.strip()) > 0
+        # Verificar que las variables están en el entorno actual
+        for var in required_vars:
+            assert var in os.environ
+            value = os.environ[var]
+            assert value is not None
+            assert len(value.strip()) > 0
     
     def test_bot_permissions(self):
         """Test de permisos del bot"""

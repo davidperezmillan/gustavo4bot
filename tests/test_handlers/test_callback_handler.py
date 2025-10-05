@@ -3,11 +3,6 @@ Tests para el callback handler
 """
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-import sys
-import os
-
-# Agregar el path del bot
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'bot'))
 
 class TestCallbackHandler:
     """Tests para el manejador de callbacks"""

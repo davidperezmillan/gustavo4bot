@@ -2,13 +2,7 @@
 Tests para el command handler
 """
 import pytest
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
-import sys
-import os
-
-# Agregar el path del bot
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'bot'))
+from unittest.mock import AsyncMock, MagicMock
 
 class TestCommandHandler:
     """Tests para los manejadores de comandos"""
