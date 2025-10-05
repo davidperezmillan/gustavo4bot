@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  gustavo4bot:
+    image: gustavo4bot:latest
+    container_name: gustavo4_bot
+    restart: unless-stopped
+    environment:
+      # Token del bot de Telegram
+      TELEGRAM_TOKEN: "7850932225:AAF5ACUWuvwI0Av8tt9Q4_yRXBWPFlxbxa0"
+      
+      # IDs de configuración
+      OWNER_ID: "14824267"
+      CHAT_SOURCE_ID: "-4862761333"
+      PUBLISH_CHANNEL_ID: "-1002795030702"
+      STORAGE_CHANNEL_ID: "-1002834323493"
+      
+      # Configuración adicional
+      LOG_LEVEL: "INFO"
+      TZ: "Europe/Madrid"
+    
+    volumes:
+      - gustavo4bot_logs:/app/logs
+    
+    networks:
+      - gustavo4bot_network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+        max_attempts: 3
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+
+volumes:
+  gustavo4bot_logs:
+    driver: local
+
+networks:
+  gustavo4bot_network:
+    driver: overlay
+    attachable: true

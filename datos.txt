@@ -1,0 +1,32 @@
+
+Concepto:
+
+quiero un bot de telegram que recupere de un chat especifico las imagenes, video y animaciones 
+se las reenvie al propietario del bot para ser tratadas
+Con esa imagen, video o animacion, debe crear otra sin texto y varios botones.
+
+En dos linea:
+Enviar y Enviar con leyenda
+Almacenar y Descartar
+
+Enviar:
+Enviara a otro canal la imagen con spoiler
+Borrar la imagen de bot
+
+Enviar con leyenda:
+preguntar al usuario la leyenda y enviarlo con spoiler
+Borrar la imgen del bot
+
+Almacenar:
+enviar la imagen a otro canal diferente
+Modificar el caption para informar que se ha almacenado
+
+Descartar:
+Borrar la imagen sin enviarla a ningun sitio
+
+el bot debe estar hecho en python, debe estar ordenado, 
+en todos los ficheros que sean necesarios y ser escalable
+
+Si necesitas mas datos o aclaraciones, preguntame
+
+7850932225:AAF5ACUWuvwI0Av8tt9Q4_yRXBWPFlxbxa0
