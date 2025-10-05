@@ -1,0 +1,39 @@
+name: Deploy to Portainer
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Portainer Stack
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy via Portainer Webhook
+        run: |
+          echo "🚀 Triggering deployment to Portainer..."
+          
+          response=$(curl -s -w "%{http_code}" -X POST \
+            "http://portainer.davidperezmillan.com/api/stacks/webhooks/1e5f595f-f205-4ae0-b2ff-ff007a535e80")
+          
+          http_code="${response: -3}"
+          
+          if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+            echo "✅ Deployment triggered successfully (HTTP $http_code)"
+            echo "📦 Stack is being updated in Portainer"
+          else
+            echo "❌ Deployment failed with HTTP code: $http_code"
+            echo "Response: ${response%???}"
+            exit 1
+          fi
+
+      - name: Deployment notification
+        run: |
+          echo "🎉 Deployment process completed!"
+          echo "📍 Check your Portainer dashboard for the updated stack"
+          echo "🔗 Portainer URL: http://portainer.davidperezmillan.com"

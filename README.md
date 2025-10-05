@@ -1,6 +1,14 @@
 # Gustavo4Bot
 
-Bot de Telegram para gestión automatizada de multimedia.
+Bot de Telegram para gestión automatizada de multimedia con despliegue automático.
+
+## 🚀 Deployment Status
+
+![Deploy to Portainer](https://github.com/davidperezmillan/gustavo4bot/workflows/Deploy%20to%20Portainer/badge.svg)
+
+Este proyecto incluye **deployment automático** a Portainer mediante GitHub Actions. Cada push a `main` despliega automáticamente la nueva versión.
+
+📖 **[Ver documentación de deployment](DEPLOYMENT.md)**
 
 ## Funcionalidades
 
