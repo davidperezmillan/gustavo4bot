@@ -1,0 +1,224 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    branches: [ main, master ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+# Permitir que el workflow cancele ejecuciones anteriores del mismo PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    name: Quality Gate
+    # No ejecutar en PRs en draft
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Obtener el historial completo para comparaciones
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-test.txt
+          pip install flake8 black isort mypy
+      
+      - name: Check code formatting with black
+        run: |
+          echo "🔍 Checking code formatting..."
+          black --check --diff bot tests
+          if [ $? -ne 0 ]; then
+            echo "❌ Code formatting issues found. Run 'black bot tests' to fix."
+            exit 1
+          fi
+          echo "✅ Code formatting is correct"
+      
+      - name: Check import sorting with isort
+        run: |
+          echo "📋 Checking import sorting..."
+          isort --check-only --diff bot tests
+          if [ $? -ne 0 ]; then
+            echo "❌ Import sorting issues found. Run 'isort bot tests' to fix."
+            exit 1
+          fi
+          echo "✅ Import sorting is correct"
+      
+      - name: Lint with flake8
+        run: |
+          echo "🔍 Running flake8 linting..."
+          # Errores críticos que bloquean el merge
+          flake8 bot tests --count --select=E9,F63,F7,F82 --show-source --statistics
+          if [ $? -ne 0 ]; then
+            echo "❌ Critical linting errors found that must be fixed!"
+            exit 1
+          fi
+          
+          # Warnings que se reportan pero no bloquean
+          echo "📊 Additional code quality checks:"
+          flake8 bot tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          echo "✅ Critical linting checks passed"
+      
+      - name: Type checking with mypy
+        run: |
+          echo "🔍 Running type checking..."
+          mypy bot --ignore-missing-imports || {
+            echo "⚠️ Type checking warnings found (not blocking merge)"
+            echo "Consider adding type hints to improve code quality"
+          }
+        continue-on-error: true
+      
+      - name: Run comprehensive tests
+        env:
+          TELEGRAM_TOKEN: "test_token_pr_${{ github.event.pull_request.number }}"
+          OWNER_ID: "123456789"
+          CHAT_SOURCE_ID: "-1001234567890"
+          PUBLISH_CHANNEL_ID: "-1001234567891"
+          STORAGE_CHANNEL_ID: "-1001234567892"
+          LOG_LEVEL: "DEBUG"
+        run: |
+          echo "🧪 Running comprehensive test suite..."
+          pytest --verbose \
+            --cov=bot \
+            --cov-report=term-missing \
+            --cov-report=xml \
+            --cov-report=html \
+            --junitxml=test-results.xml \
+            --tb=short
+          
+          if [ $? -ne 0 ]; then
+            echo "❌ Tests failed! PR cannot be merged until all tests pass."
+            exit 1
+          fi
+          echo "✅ All tests passed successfully!"
+      
+      - name: Check test coverage
+        run: |
+          echo "📊 Checking test coverage..."
+          coverage report --fail-under=70 || {
+            echo "❌ Test coverage is below 70%"
+            echo "Please add more tests to improve coverage"
+            exit 1
+          }
+          echo "✅ Test coverage is adequate"
+      
+      - name: Security scan (basic)
+        run: |
+          echo "🔒 Running basic security checks..."
+          # Verificar que no hay secretos hardcodeados
+          if grep -r "ghp_\|sk-\|AKIA\|ASAK" bot/ tests/ --exclude-dir=.git 2>/dev/null; then
+            echo "❌ Potential secrets found in code!"
+            echo "Please remove any hardcoded secrets"
+            exit 1
+          fi
+          
+          # Verificar archivos .env no están en el repo
+          if [ -f ".env" ]; then
+            echo "❌ .env file should not be committed!"
+            echo "Please remove .env from the repository"
+            exit 1
+          fi
+          
+          echo "✅ Basic security checks passed"
+      
+      - name: Upload test artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-test-results-${{ github.event.pull_request.number }}
+          path: |
+            test-results.xml
+            coverage.xml
+            htmlcov/
+          retention-days: 7
+      
+      - name: Generate PR comment with results
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Leer resultados de coverage si existe
+            let coverageInfo = '';
+            try {
+              const coverage = fs.readFileSync('coverage.xml', 'utf8');
+              const match = coverage.match(/line-rate="([^"]+)"/);
+              if (match) {
+                const percentage = Math.round(parseFloat(match[1]) * 100);
+                coverageInfo = `📊 **Test Coverage:** ${percentage}%\n`;
+              }
+            } catch (e) {
+              coverageInfo = '📊 **Test Coverage:** Unable to determine\n';
+            }
+            
+            const jobStatus = '${{ job.status }}';
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            
+            const statusIcon = jobStatus === 'success' ? '✅' : '❌';
+            const statusText = jobStatus === 'success' ? 'PASSED' : 'FAILED';
+            
+            const comment = `## ${statusIcon} Quality Gate: ${statusText}
+            
+            **PR #${{ github.event.pull_request.number }}** quality checks completed.
+            
+            ${coverageInfo}
+            
+            ### Checks performed:
+            - 🔍 Code formatting (black)
+            - 📋 Import sorting (isort)  
+            - 🔍 Linting (flake8)
+            - 🔍 Type checking (mypy)
+            - 🧪 Test suite execution
+            - 📊 Coverage analysis
+            - 🔒 Basic security scan
+            
+            ${jobStatus === 'success' ? 
+              '🎉 **All checks passed!** This PR is ready for review and merge.' : 
+              '❌ **Some checks failed.** Please fix the issues before merging.'
+            }
+            
+            📋 **Details:** [View full workflow run](${runUrl})
+            
+            ---
+            *Automated quality gate • Generated at $(date)*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  # Job que marca el estado final para branch protection
+  pr-status:
+    runs-on: ubuntu-latest
+    name: PR Status Check
+    needs: quality-gate
+    if: always()
+    
+    steps:
+      - name: Mark PR status
+        run: |
+          if [ "${{ needs.quality-gate.result }}" == "success" ]; then
+            echo "✅ PR quality gate passed - ready for merge"
+            exit 0
+          else
+            echo "❌ PR quality gate failed - merge blocked"
+            exit 1
+          fi
