@@ -5,11 +5,15 @@ services:
     build: .
     container_name: gustavo4_bot
     restart: unless-stopped
-    env_file:
-      - .env
     volumes:
       - ./logs:/app/logs
     environment:
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+      - OWNER_ID=${OWNER_ID}
+      - CHAT_SOURCE_ID=${CHAT_SOURCE_ID}
+      - PUBLISH_CHANNEL_ID=${PUBLISH_CHANNEL_ID}
+      - STORAGE_CHANNEL_ID=${STORAGE_CHANNEL_ID}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - TZ=${TZ:-Europe/Madrid}
     networks:
       - bot-network
