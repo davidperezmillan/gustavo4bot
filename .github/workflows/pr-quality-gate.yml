@@ -19,9 +19,9 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality-gate:
+  pr-quality-gate:
     runs-on: ubuntu-latest
-    name: Quality Gate
+    name: PR Quality Gate
     # No ejecutar en PRs en draft
     if: github.event.pull_request.draft == false
     
@@ -210,20 +210,5 @@ jobs:
             });
         continue-on-error: true
 
-  # Job que marca el estado final para branch protection
-  pr-status:
-    runs-on: ubuntu-latest
-    name: PR Status Check
-    needs: quality-gate
-    if: always()
-    
-    steps:
-      - name: Mark PR status
-        run: |
-          if [ "${{ needs.quality-gate.result }}" == "success" ]; then
-            echo "✅ PR quality gate passed - ready for merge"
-            exit 0
-          else
-            echo "❌ PR quality gate failed - merge blocked"
-            exit 1
-          fi
+  # Esta es la única verificación que necesitamos para branch protection
+  # El job anterior ya maneja todo lo necesario
